@@ -20,6 +20,16 @@ const App: React.FC = () => {
   const [dragging, setDragging] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
 
+  const handleSend = React.useCallback((content: string) => {
+    setSelectedTurnId(null);
+    sendMessage(content);
+  }, [sendMessage]);
+
+  const handleClear = React.useCallback(() => {
+    setSelectedTurnId(null);
+    clearChat();
+  }, [clearChat]);
+
   const handleMouseDown = React.useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     setDragging(true);
@@ -72,9 +82,9 @@ const App: React.FC = () => {
         <ChatPanel
           messages={messages}
           isLoading={isLoading}
-          onSend={sendMessage}
+          onSend={handleSend}
           onStop={stopStreaming}
-          onClear={clearChat}
+          onClear={handleClear}
           onSelectMessage={setSelectedTurnId}
         />
       </div>
