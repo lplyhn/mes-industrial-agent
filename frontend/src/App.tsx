@@ -1,5 +1,6 @@
-﻿import React from "react";
+import React from "react";
 import { ChatPanel } from "./components/ChatPanel";
+import { HistoryPanel } from "./components/HistoryPanel";
 import { TracePanel } from "./components/TracePanel";
 import { useSSE } from "./hooks/useSSE";
 import "./styles/index.css";
@@ -17,12 +18,34 @@ const App: React.FC = () => {
     loadConversations,
     switchConversation,
     createNewConv,
+    deleteConv,
   } = useSSE();
 
   const [selectedTurnId, setSelectedTurnId] = React.useState<string | null>(null);
-  const [leftWidth, setLeftWidth] = React.useState(25);
-  const [dragging, setDragging] = React.useState(false);
+  const [currentConvId, setCurrentConvId] = React.useState<string>("");
+  const [leftWidth, setLeftWidth] = React.useState(20);
+  const [leftDragging, setLeftDragging] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => { loadConversations(); }, [loadConversations]);
+
+  React.useEffect(() => {
+    function onMove(e: MouseEvent) {
+      if (!leftDragging || !containerRef.current) return;
+      var rect = containerRef.current.getBoundingClientRect();
+      var pct = ((e.clientX - rect.left) / rect.width) * 100;
+      setLeftWidth(Math.max(10, Math.min(40, pct)));
+    }
+    function onUp() { setLeftDragging(false); }
+    if (leftDragging) {
+      window.addEventListener("mousemove", onMove);
+      window.addEventListener("mouseup", onUp);
+    }
+    return function() {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+  }, [leftDragging]);
 
   const handleSend = React.useCallback((content: string) => {
     setSelectedTurnId(null);
@@ -32,35 +55,8 @@ const App: React.FC = () => {
   const handleClear = React.useCallback(() => {
     setSelectedTurnId(null);
     clearChat();
-  }, [clearChat]);
-
-  const handleMouseDown = React.useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    setDragging(true);
-  }, []);
-
-  const handleMouseMove = React.useCallback((e: MouseEvent) => {
-    if (!dragging || !containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const pct = (x / rect.width) * 100;
-    setLeftWidth(Math.max(5, Math.min(80, pct)));
-  }, [dragging]);
-
-  const handleMouseUp = React.useCallback(() => {
-    setDragging(false);
-  }, []);
-
-  React.useEffect(() => {
-    if (dragging) {
-      window.addEventListener("mousemove", handleMouseMove);
-      window.addEventListener("mouseup", handleMouseUp);
-    }
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [dragging, handleMouseMove, handleMouseUp]);
+    loadConversations();
+  }, [clearChat, loadConversations]);
 
   return (
     <div
@@ -71,65 +67,59 @@ const App: React.FC = () => {
         width: "100vw",
         overflow: "hidden",
         backgroundColor: "#f5f5f5",
-        userSelect: dragging ? "none" : undefined,
-        cursor: dragging ? "col-resize" : undefined,
+        userSelect: leftDragging ? "none" : undefined,
+        cursor: leftDragging ? "col-resize" : undefined,
       }}
     >
-      {/* Left: Chat Panel */}
+      {/* Left: History Panel */}
       <div
         style={{
-          width: `${leftWidth}%`,
+          width: leftWidth + "%",
           minWidth: 0,
           overflow: "hidden",
         }}
       >
+        <HistoryPanel
+          convs={convs}
+          currentConvId={currentConvId}
+          onNewChat={createNewConv}
+          onSwitchConv={function(id) { setCurrentConvId(id); switchConversation(id); }}
+          onDeleteConv={deleteConv}
+        />
+      </div>
+
+      {/* Divider 1 */}
+      <div
+        onMouseDown={function(e) { e.preventDefault(); setLeftDragging(true); }}
+        style={{
+          width: "6px",
+          cursor: "col-resize",
+          backgroundColor: leftDragging ? "#1976d2" : "#e0e0e0",
+          transition: "background-color 0.15s",
+          flexShrink: 0,
+        }}
+      />
+
+      {/* Middle: Chat Panel */}
+      <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
         <ChatPanel
           messages={messages}
-          convs={convs}
           isLoading={isLoading}
           onSend={handleSend}
           onStop={stopStreaming}
           onClear={handleClear}
-          onNewChat={createNewConv}
-          onSwitchConv={switchConversation}
           onSelectMessage={setSelectedTurnId}
-        />
-      </div>
-
-      {/* Draggable Divider */}
-      <div
-        onMouseDown={handleMouseDown}
-        style={{
-          width: "6px",
-          cursor: "col-resize",
-          backgroundColor: dragging ? "#1976d2" : "#e0e0e0",
-          transition: "background-color 0.15s",
-          flexShrink: 0,
-          position: "relative",
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: "2px",
-            height: "32px",
-            backgroundColor: dragging ? "#fff" : "#ccc",
-            borderRadius: "2px",
-            transition: "background-color 0.15s",
-          }}
         />
       </div>
 
       {/* Right: Trace Panel */}
       <div
         style={{
-          flex: 1,
+          width: "420px",
           minWidth: 0,
           backgroundColor: "#fff",
           overflow: "hidden",
+          borderLeft: "1px solid #e0e0e0",
         }}
       >
         <TracePanel toolCalls={toolCalls} selectedTurnId={selectedTurnId} />
@@ -160,9 +150,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-
-
-
-
-
-

@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { ChatMessage, ToolCall } from '../types';
-import { streamChat, listConversations, createConversation, updateConversation, getConversation } from '../services/hermes';
+import { streamChat, listConversations, createConversation, updateConversation, getConversation, deleteConversation } from '../services/hermes';
 
 export function useSSE() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -39,6 +39,18 @@ export function useSSE() {
     } catch (e) { console.error(e); }
   }, []);
 
+  const deleteConv = useCallback(async (id: string) => {
+    try {
+      if (id === convIdRef.current) {
+        convIdRef.current = '';
+        setMessages([]);
+        setToolCalls([]);
+      }
+      await deleteConversation(id);
+      await loadConversations();
+    } catch (e) { console.error(e); }
+  }, [loadConversations]);
+
   const createNewConv = useCallback(async () => {
     try {
       const conv = await createConversation();
@@ -58,6 +70,7 @@ const sendMessage = useCallback(async (content: string) => {
       timestamp: Date.now(),
     };
 
+    if (!convIdRef.current) { try { const nc = await createConversation(); convIdRef.current = nc.id; await loadConversations(); } catch {} }
     setMessages(prev => [...prev, userMsg]);
     setIsLoading(true);
     setError(null);
@@ -106,8 +119,15 @@ const sendMessage = useCallback(async (content: string) => {
               return [...prev, { ...tool, status: tool.status as "running" | "completed" | "failed", turnId: turnIdRef.current }];
             });
           },
-          onDone: (fullContent) => {
+          onDone: async (fullContent) => {
             setIsLoading(false);
+            if (convIdRef.current) {
+              try {
+                var title = messages.length > 0 ? (typeof messages[0].content === 'string' ? messages[0].content.slice(0, 30) : '新对话') : '新对话';
+                await updateConversation(convIdRef.current, { title: title, messages: messages, toolCalls: toolCalls });
+                await loadConversations();
+              } catch(e) { console.error(e); }
+            }
           },
           onError: (err) => {
             setError(err);
@@ -149,6 +169,7 @@ const sendMessage = useCallback(async (content: string) => {
     loadConversations,
     switchConversation,
     createNewConv,
+    deleteConv,
   };
 }
 
