@@ -140,11 +140,15 @@ const sendMessage = useCallback(async (content: string) => {
   return {
     messages,
     toolCalls,
+    convs,
     isLoading,
     error,
     sendMessage,
     stopStreaming,
     clearChat,
+    loadConversations,
+    switchConversation,
+    createNewConv,
   };
 }
 

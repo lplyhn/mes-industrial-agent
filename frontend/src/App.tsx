@@ -8,11 +8,15 @@ const App: React.FC = () => {
   const {
     messages,
     toolCalls,
+    convs,
     isLoading,
     error,
     sendMessage,
     stopStreaming,
     clearChat,
+    loadConversations,
+    switchConversation,
+    createNewConv,
   } = useSSE();
 
   const [selectedTurnId, setSelectedTurnId] = React.useState<string | null>(null);
@@ -81,10 +85,13 @@ const App: React.FC = () => {
       >
         <ChatPanel
           messages={messages}
+          convs={convs}
           isLoading={isLoading}
           onSend={handleSend}
           onStop={stopStreaming}
           onClear={handleClear}
+          onNewChat={createNewConv}
+          onSwitchConv={switchConversation}
           onSelectMessage={setSelectedTurnId}
         />
       </div>
