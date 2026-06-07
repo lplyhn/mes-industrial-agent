@@ -25,7 +25,7 @@ const App: React.FC = () => {
   const [currentConvId, setCurrentConvId] = React.useState<string>("");
   const [leftWidth, setLeftWidth] = React.useState(15);
   const [leftDragging, setLeftDragging] = React.useState(false);
-  const [middleWidth, setMiddleWidth] = React.useState(35);
+  const [middleWidth, setMiddleWidth] = React.useState(25);
   const [middleDragging, setMiddleDragging] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
 

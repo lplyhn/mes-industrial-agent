@@ -8,7 +8,6 @@ interface Props {
   onSend: (content: string) => void;
   onStop: () => void;
   onClear: () => void;
-  onNewChat?: () => void;
   onSwitchConv?: (id: string) => void;
   onSelectMessage?: (msgId: string) => void;
 }
@@ -31,7 +30,6 @@ export const ChatPanel: React.FC<Props> = ({
   onSend,
   onStop,
   onClear,
-  onNewChat,
   onSwitchConv,
   onSelectMessage,
 }) => {
@@ -101,7 +99,6 @@ export const ChatPanel: React.FC<Props> = ({
           <h2 style={{ margin: 0, fontSize: "16px", color: "#333" }}>MES 工业智能助手</h2>
           <span style={{ fontSize: "12px", color: "#999" }}>基于 Hermes Agent + MCP</span>
         </div>
-        <button onClick={onNewChat} style={{ padding: "6px 14px", border: "1px solid #1976d2", borderRadius: "6px", backgroundColor: "#e3f2fd", cursor: "pointer", fontSize: "12px", color: "#1976d2", whiteSpace: "nowrap", fontWeight: 500 }}>+ 新对话</button>
         <button onClick={onClear} style={{ padding: "6px 14px", border: "1px solid #e0e0e0", borderRadius: "6px", backgroundColor: "#fff", cursor: "pointer", fontSize: "12px", color: "#666" }}>清除对话</button>
       </div>
 

@@ -1,18 +1,26 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { ChatMessage, ToolCall } from '../types';
 import { streamChat, listConversations, createConversation, updateConversation, getConversation, deleteConversation } from '../services/hermes';
 
 export function useSSE() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  
   const [toolCalls, setToolCalls] = useState<ToolCall[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const aborterRef = useRef<AbortController | null>(null);
   const assistantIdRef = useRef<string>('');
   const contentRef = useRef('');
+  const messagesRef = useRef<any[]>([]);
+  const toolCallsRef = useRef<any[]>([]);
   const turnIdRef = useRef<string>('');
+  const saveDataRef = useRef({ messages: [] as any[], toolCalls: [] as any[] });
   const convIdRef = useRef<string>('');
   const [convs, setConvs] = useState<any[]>([]);
+
+  // Keep refs in sync with state
+  const msgs = messages;
+  const tcs = toolCalls;
 
   
 
@@ -61,6 +69,12 @@ export function useSSE() {
       await loadConversations();
     } catch (e) { console.error(e); }
   }, [loadConversations]);
+
+
+  // Sync ref with latest state for save operations
+  useEffect(() => {
+    saveDataRef.current = { messages, toolCalls };
+  }, [messages, toolCalls]);
 
 const sendMessage = useCallback(async (content: string) => {
     const userMsg: ChatMessage = {
