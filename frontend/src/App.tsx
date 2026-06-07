@@ -15,7 +15,7 @@ const App: React.FC = () => {
     clearChat,
   } = useSSE();
 
-  const [leftWidth, setLeftWidth] = React.useState(35);
+  const [leftWidth, setLeftWidth] = React.useState(25);
   const [dragging, setDragging] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
 
@@ -29,7 +29,7 @@ const App: React.FC = () => {
     const rect = containerRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const pct = (x / rect.width) * 100;
-    setLeftWidth(Math.max(20, Math.min(80, pct)));
+    setLeftWidth(Math.max(5, Math.min(80, pct)));
   }, [dragging]);
 
   const handleMouseUp = React.useCallback(() => {
@@ -141,4 +141,9 @@ const App: React.FC = () => {
 };
 
 export default App;
+
+
+
+
+
 

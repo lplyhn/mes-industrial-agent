@@ -10,7 +10,7 @@ interface Props {
   onClear: () => void;
 }
 
-const SUGGESTIONS = [
+const QUICK_QUESTIONS = [
   "今日未完成工单有哪些",
   "A 产线最近 24 小时质量是否异常",
   "当前有哪些报警设备",
@@ -101,17 +101,10 @@ export const ChatPanel: React.FC<Props> = ({
       {/* Messages */}
       <div style={{ flex: 1, overflowY: "auto", padding: "20px" }}>
         {messages.length === 0 && (
-          <div style={{ textAlign: "center", padding: "40px 20px", color: "#999" }}>
-            <div style={{ fontSize: "40px", marginBottom: "12px" }}>🏭</div>
+          <div style={{ textAlign: "center", padding: "60px 20px 40px", color: "#999" }}>
+            <div style={{ fontSize: "48px", marginBottom: "12px" }}>🏭</div>
             <p style={{ margin: "0 0 4px", fontSize: "16px", color: "#666" }}>MES 工业智能助手</p>
-            <p style={{ margin: "0 0 24px", fontSize: "13px" }}>可以用自然语言查询工单、生产、质量和设备信息</p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", justifyContent: "center" }}>
-              {SUGGESTIONS.map((s) => (
-                <button key={s} onClick={() => onSend(s)} style={{ padding: "8px 16px", border: "1px solid #ddd", borderRadius: "20px", backgroundColor: "#fff", cursor: "pointer", fontSize: "13px", color: "#555" }}
-                  onMouseEnter={(e) => { (e.target as HTMLElement).style.borderColor = "#1976d2"; (e.target as HTMLElement).style.color = "#1976d2"; }}
-                  onMouseLeave={(e) => { (e.target as HTMLElement).style.borderColor = "#ddd"; (e.target as HTMLElement).style.color = "#555"; }}>{s}</button>
-              ))}
-            </div>
+            <p style={{ margin: "0", fontSize: "13px" }}>可以用自然语言查询工单、生产、质量和设备信息</p>
           </div>
         )}
         {messages.map((msg) => (
@@ -120,10 +113,26 @@ export const ChatPanel: React.FC<Props> = ({
         <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
-      <div style={{ padding: "16px 20px", backgroundColor: "#fff", borderTop: "1px solid #e0e0e0" }}>
-        <form onSubmit={handleSubmit} style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-          {/* Microphone */}
+      {/* Input + Quick Questions */}
+      <div style={{ backgroundColor: "#fff", borderTop: "1px solid #e0e0e0" }}>
+        {/* Quick question chips */}
+        {!isLoading && (
+          <div style={{ padding: "10px 20px 0", display: "flex", gap: "6px", flexWrap: "wrap" }}>
+            {QUICK_QUESTIONS.map((q) => (
+              <button key={q} onClick={() => onSend(q)}
+                style={{
+                  padding: "5px 12px", border: "1px solid #e0e0e0", borderRadius: "14px",
+                  backgroundColor: "#fafafa", cursor: "pointer", fontSize: "12px", color: "#666",
+                  whiteSpace: "nowrap", transition: "all 0.15s",
+                }}
+                onMouseEnter={(e) => { (e.target as HTMLElement).style.borderColor = "#1976d2"; (e.target as HTMLElement).style.color = "#1976d2"; (e.target as HTMLElement).style.backgroundColor = "#e3f2fd"; }}
+                onMouseLeave={(e) => { (e.target as HTMLElement).style.borderColor = "#e0e0e0"; (e.target as HTMLElement).style.color = "#666"; (e.target as HTMLElement).style.backgroundColor = "#fafafa"; }}
+              >{q}</button>
+            ))}
+          </div>
+        )}
+        {/* Input row */}
+        <form onSubmit={handleSubmit} style={{ display: "flex", gap: "8px", padding: "10px 20px 16px", alignItems: "center" }}>
           {hasVoice && (
             <button type="button" onClick={toggleVoice} disabled={isLoading}
               title={isListening ? "点击停止录音" : "语音输入"}
@@ -136,11 +145,8 @@ export const ChatPanel: React.FC<Props> = ({
               }}
             >{isListening ? "🔴" : "🎤"}</button>
           )}
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={isListening ? "正在聆听，说完后点击 🎤 停止..." : hasVoice ? "输入或语音输入问题..." : "输入您的问题..."}
+          <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown}
+            placeholder={isListening ? "正在聆听..." : hasVoice ? "输入或语音输入问题..." : "输入您的问题..."}
             disabled={isLoading}
             style={{
               flex: 1, padding: "10px 14px", fontSize: "14px", outline: "none",
@@ -154,8 +160,8 @@ export const ChatPanel: React.FC<Props> = ({
             <button type="submit" style={{ padding: "10px 20px", border: "none", borderRadius: "8px", backgroundColor: "#1976d2", color: "#fff", cursor: "pointer", fontSize: "14px", whiteSpace: "nowrap" }}>发送</button>
           )}
         </form>
-        {isListening && <div style={{ fontSize: "11px", color: "#e53935", marginTop: "6px", textAlign: "center" }}>🔴 录音中，点击 🎤 停止后手动发送</div>}
-        {!hasVoice && <div style={{ fontSize: "10px", color: "#bbb", marginTop: "4px", textAlign: "right" }}>语音输入需要 Chrome/Edge 浏览器</div>}
+        {isListening && <div style={{ fontSize: "11px", color: "#e53935", padding: "0 20px 10px", textAlign: "center" }}>🔴 录音中，点击 🎤 停止后手动发送</div>}
+        {!hasVoice && <div style={{ fontSize: "10px", color: "#bbb", padding: "0 20px 10px", textAlign: "right" }}>语音输入需要 Chrome/Edge 浏览器</div>}
       </div>
     </div>
   );

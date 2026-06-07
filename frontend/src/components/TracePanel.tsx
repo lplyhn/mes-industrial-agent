@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo } from "react";
+﻿import React, { useState, useMemo, useRef, useEffect } from "react";
 import type { ToolCall } from "../types";
 import { ResultRenderer } from "./ResultRenderer";
 
@@ -54,6 +54,12 @@ export const TracePanel: React.FC<Props> = ({ toolCalls }) => {
     [toolCalls]
   );
 
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  }, [toolCalls]);
+
   return (
     <div
       style={{
@@ -69,7 +75,7 @@ export const TracePanel: React.FC<Props> = ({ toolCalls }) => {
           工具调用轨迹
         </p>
       </div>
-      <div style={{ flex: 1, overflowY: "auto", padding: "12px 16px" }}>
+      <div ref={scrollRef} style={{ flex: 1, overflowY: "auto", padding: "12px 16px" }}>
         {toolCalls.length === 0 && (
           <div
             style={{
@@ -238,3 +244,4 @@ export const TracePanel: React.FC<Props> = ({ toolCalls }) => {
     </div>
   );
 };
+

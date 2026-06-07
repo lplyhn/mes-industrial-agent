@@ -1,4 +1,4 @@
-const HERMES_URL = 'http://localhost:8642/v1/chat/completions';
+﻿const HERMES_URL = '/api/v1/chat/completions';
 
 export interface StreamCallbacks {
   onContent: (content: string) => void;
@@ -10,6 +10,21 @@ export interface StreamCallbacks {
   }) => void;
   onDone: (fullContent: string) => void;
   onError: (error: string) => void;
+}
+
+// MCP 工具名称 → 中文显示名
+const TOOL_NAME_MAP: Record<string, string> = {
+  workorders: "工单查询",
+  production: "生产查询",
+  quality: "质量分析",
+  equipment: "设备诊断",
+  generate_daily_report: "日报生成",
+};
+
+function formatToolName(name: string): string {
+  let n = name;
+  if (n.startsWith("mcp_mes_")) n = n.slice(8);
+  return TOOL_NAME_MAP[n] || n;
 }
 
 export async function streamChat(
@@ -82,7 +97,6 @@ export async function streamChat(
       }
     }
 
-    // Process remaining buffer
     if (buffer.trim()) {
       const trimmed = buffer.trim();
       if (trimmed.startsWith('data: ')) {
@@ -110,21 +124,15 @@ function parseSSEData(
   getFullContent: () => string
 ) {
   if (currentEvent === 'hermes.tool.progress') {
-    // 1. Update agent trace (right panel)
     if (callbacks.onToolProgress && parsed.tool) {
-      let toolName = parsed.tool;
-      if (toolName.startsWith('mcp_mes_')) {
-        toolName = toolName.slice(8);
-      }
       callbacks.onToolProgress({
-        tool_name: toolName,
+        tool_name: parsed.tool,
         status: parsed.status || 'running',
         label: parsed.label,
         result: parsed.result,
       });
     }
 
-    // 2. Extract LLM text content from tool progress
     const delta = parsed.choices?.[0]?.delta;
     if (delta?.content) {
       callbacks.onContent(delta.content);
@@ -138,3 +146,4 @@ function parseSSEData(
     callbacks.onContent(delta.content);
   }
 }
+
