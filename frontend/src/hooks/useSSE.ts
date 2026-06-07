@@ -61,6 +61,16 @@ export function useSSE() {
 
   const createNewConv = useCallback(async () => {
     try {
+      // Save current conversation before switching
+      if (convIdRef.current) {
+        try {
+          var sd = saveDataRef.current || { messages: [], toolCalls: [] };
+          var msgs = sd.messages || [];
+          var tcs = sd.toolCalls || [];
+          var title = msgs.length > 0 ? (typeof msgs[0].content === 'string' ? msgs[0].content.slice(0, 30) : '???') : '???';
+          await updateConversation(convIdRef.current, { title: title, messages: msgs, toolCalls: tcs });
+        } catch(e) { console.error(e); }
+      }
       const conv = await createConversation();
       convIdRef.current = conv.id;
       setMessages([]);
