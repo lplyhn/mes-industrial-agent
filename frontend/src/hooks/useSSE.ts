@@ -95,7 +95,16 @@ const sendMessage = useCallback(async (content: string) => {
     };
 
     if (!convIdRef.current) { try { const nc = await createConversation(); convIdRef.current = nc.id; await loadConversations(); } catch {} }
-    setMessages(prev => [...prev, userMsg]);
+    // Save user msg to DB first
+    if (convIdRef.current) {
+      try {
+        var cur = saveDataRef.current || { messages: [], toolCalls: [] };
+        var nm = (cur.messages || []).concat([userMsg]);
+        await updateConversation(convIdRef.current, { messages: nm, toolCalls: cur.toolCalls || [] });
+        saveDataRef.current = { messages: nm, toolCalls: cur.toolCalls || [] };
+      } catch(e) { console.error(e); }
+    }
+    setMessages(prev => { var nm = [...prev, userMsg]; saveDataRef.current = { messages: nm, toolCalls: saveDataRef.current.toolCalls || [] }; return nm; });
     setIsLoading(true);
     setError(null);
     
@@ -140,18 +149,23 @@ const sendMessage = useCallback(async (content: string) => {
                 updated[idx] = { ...updated[idx], status: tool.status as "running" | "completed" | "failed" };
                 return updated;
               }
-              return [...prev, { ...tool, status: tool.status as "running" | "completed" | "failed", turnId: turnIdRef.current }];
+              var newTC = [...prev, { ...tool, status: tool.status as "running" | "completed" | "failed", turnId: turnIdRef.current }];
+              saveDataRef.current = { messages: saveDataRef.current.messages || [], toolCalls: newTC };
+              return newTC;
             });
           },
           onDone: async (fullContent) => {
-            setIsLoading(false);
             if (convIdRef.current) {
               try {
-                var title = messages.length > 0 ? (typeof messages[0].content === 'string' ? messages[0].content.slice(0, 30) : '新对话') : '新对话';
-                await updateConversation(convIdRef.current, { title: title, messages: messages, toolCalls: toolCalls });
+                var sd = saveDataRef.current || { messages: [], toolCalls: [] };
+                var msgs = sd.messages || [];
+                var tcs = sd.toolCalls || [];
+                var title = msgs.length > 0 ? (typeof msgs[0].content === 'string' ? msgs[0].content.slice(0, 30) : '新对话') : '新对话';
+                await updateConversation(convIdRef.current, { title: title, messages: msgs, toolCalls: tcs });
                 await loadConversations();
               } catch(e) { console.error(e); }
             }
+            setIsLoading(false);
           },
           onError: (err) => {
             setError(err);
