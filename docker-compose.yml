@@ -1,0 +1,41 @@
+version: "3.8"
+
+services:
+  mes-api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    networks:
+      - mes-network
+
+  mcp-server:
+    build:
+      context: ./mcp-server
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    depends_on:
+      - mes-api
+    networks:
+      - mes-network
+    environment:
+      - MES_API_BASE=http://mes-api:8000
+
+  hermes-agent:
+    image: nousresearch/hermes-agent:latest
+    ports:
+      - "8642:8642"
+    volumes:
+      - ./config:/app/config
+      - ./skills:/app/skills
+    depends_on:
+      - mcp-server
+    networks:
+      - mes-network
+    command: ["hermes", "serve", "--config", "/app/config/hermes_config.yaml"]
+
+networks:
+  mes-network:
+    driver: bridge

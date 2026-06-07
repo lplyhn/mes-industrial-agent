@@ -1,0 +1,36 @@
+# Hermes Agent 配置文件
+# MES 工业智能助手
+
+model:
+  api_key: "sk-83d9f6fa7b8442ddbb484da6460179ba"
+  base_url: "https://api.deepseek.com"
+  model: "deepseek-v4-flash"
+  default_temperature: 0.3
+  max_tokens: 4096
+
+streaming:
+  enabled: true
+
+mcp:
+  servers:
+    mes:
+      type: "sse"
+      url: "http://localhost:8001/sse"
+
+skills:
+  dir: "./skills"
+  auto_load: true
+
+server:
+  host: "0.0.0.0"
+  port: 8642
+  cors:
+    enabled: true
+    allow_origins:
+      - "http://localhost:5174"
+      - "http://localhost:3000"
+      - "http://127.0.0.1:5174"
+
+logging:
+  level: "info"
+  format: "%(asctime)s | %(levelname)s | %(message)s"
