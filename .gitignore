@@ -36,3 +36,5 @@ frontend/dist/
 # ngrok
 ngrok.exe
 ngrok.yml
+
+backend/conversations.db

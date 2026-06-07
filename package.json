@@ -1,0 +1,27 @@
+{
+  "name": "mes-industrial-agent",
+  "version": "1.0.0",
+  "description": "基于 Hermes Agent + MCP 的智能生产助手，支持自然语言查询工单、生产、质量和设备信息。",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lplyhn/mes-industrial-agent.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/lplyhn/mes-industrial-agent/issues"
+  },
+  "homepage": "https://github.com/lplyhn/mes-industrial-agent#readme",
+  "dependencies": {
+    "sql.js": "^1.14.1"
+  }
+}
