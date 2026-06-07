@@ -62,3 +62,13 @@ export interface ToolResultData {
   tool_name: string;
   data: any;
 }
+
+
+export interface Conversation {
+  id: string;
+  title: string;
+  messages: ChatMessage[];
+  toolCalls: ToolCall[];
+  created_at: string;
+  updated_at: string;
+}

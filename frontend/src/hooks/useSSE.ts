@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { ChatMessage, ToolCall } from '../types';
-import { streamChat } from '../services/hermes';
+import { streamChat, listConversations, createConversation, updateConversation, getConversation } from '../services/hermes';
 
 export function useSSE() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -11,8 +11,46 @@ export function useSSE() {
   const assistantIdRef = useRef<string>('');
   const contentRef = useRef('');
   const turnIdRef = useRef<string>('');
+  const convIdRef = useRef<string>('');
+  const [convs, setConvs] = useState<any[]>([]);
 
-  const sendMessage = useCallback(async (content: string) => {
+  
+
+  const loadConversations = useCallback(async () => {
+    try { const r = await listConversations(); setConvs(r); } catch {} },
+    []
+  );
+
+  const switchConversation = useCallback(async (id: string) => {
+    try {
+      const conv = await getConversation(id);
+      setMessages(conv.messages || []);
+      setToolCalls(conv.toolCalls || []);
+      convIdRef.current = id;
+      setError(null);
+    } catch (e) { console.error(e); }
+  }, []);
+
+  const saveCurrentConv = useCallback(async (mid: string, msgs: any[], tcs: any[]) => {
+    if (!mid) return;
+    try {
+      const title = msgs.length > 0 ? (typeof msgs[0].content === 'string' ? msgs[0].content.slice(0, 30) : '\u65b0\u5bf9\u8bdd') : '\u65b0\u5bf9\u8bdd';
+      await updateConversation(mid, { title, messages: msgs, toolCalls: tcs });
+    } catch (e) { console.error(e); }
+  }, []);
+
+  const createNewConv = useCallback(async () => {
+    try {
+      const conv = await createConversation();
+      convIdRef.current = conv.id;
+      setMessages([]);
+      setToolCalls([]);
+      setError(null);
+      await loadConversations();
+    } catch (e) { console.error(e); }
+  }, [loadConversations]);
+
+const sendMessage = useCallback(async (content: string) => {
     const userMsg: ChatMessage = {
       id: `user-${Date.now()}`,
       role: 'user',

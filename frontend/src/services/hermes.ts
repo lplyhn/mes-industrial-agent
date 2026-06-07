@@ -147,3 +147,36 @@ function parseSSEData(
   }
 }
 
+export async function listConversations(): Promise<{id: string; title: string; created_at: string; updated_at: string}[]> {
+  const r = await fetch('/api/conversations');
+  if (!r.ok) throw new Error('Failed to list conversations');
+  return r.json();
+}
+
+export async function createConversation(): Promise<any> {
+  const r = await fetch('/api/conversations', { method: 'POST' });
+  if (!r.ok) throw new Error('Failed to create conversation');
+  return r.json();
+}
+
+export async function getConversation(id: string): Promise<any> {
+  const r = await fetch('/api/conversations/' + encodeURIComponent(id));
+  if (!r.ok) throw new Error('Conversation not found');
+  return r.json();
+}
+
+export async function updateConversation(id: string, data: {title?: string; messages?: any[]; toolCalls?: any[]}): Promise<any> {
+  const r = await fetch('/api/conversations/' + encodeURIComponent(id), {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!r.ok) throw new Error('Failed to update conversation');
+  return r.json();
+}
+
+export async function deleteConversation(id: string): Promise<any> {
+  const r = await fetch('/api/conversations/' + encodeURIComponent(id), { method: 'DELETE' });
+  if (!r.ok) throw new Error('Failed to delete conversation');
+  return r.json();
+}

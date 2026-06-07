@@ -4,10 +4,13 @@ import { MessageBubble } from "./MessageBubble";
 
 interface Props {
   messages: ChatMessage[];
+  convs?: any[];
   isLoading: boolean;
   onSend: (content: string) => void;
   onStop: () => void;
   onClear: () => void;
+  onNewChat?: () => void;
+  onSwitchConv?: (id: string) => void;
   onSelectMessage?: (msgId: string) => void;
 }
 
@@ -25,10 +28,13 @@ function getSpeechRecognition(): any {
 
 export const ChatPanel: React.FC<Props> = ({
   messages,
+  convs,
   isLoading,
   onSend,
   onStop,
   onClear,
+  onNewChat,
+  onSwitchConv,
   onSelectMessage,
 }) => {
   const [input, setInput] = useState("");
@@ -97,8 +103,22 @@ export const ChatPanel: React.FC<Props> = ({
           <h2 style={{ margin: 0, fontSize: "16px", color: "#333" }}>MES 工业智能助手</h2>
           <span style={{ fontSize: "12px", color: "#999" }}>基于 Hermes Agent + MCP</span>
         </div>
+        <button onClick={onNewChat} style={{ padding: "6px 14px", border: "1px solid #1976d2", borderRadius: "6px", backgroundColor: "#e3f2fd", cursor: "pointer", fontSize: "12px", color: "#1976d2", whiteSpace: "nowrap", fontWeight: 500 }}>+ \u65b0\u5bf9\u8bdd</button>
         <button onClick={onClear} style={{ padding: "6px 14px", border: "1px solid #e0e0e0", borderRadius: "6px", backgroundColor: "#fff", cursor: "pointer", fontSize: "12px", color: "#666" }}>清除对话</button>
       </div>
+
+      {convs && convs.length > 0 && (
+        <div style={{ padding: "8px 12px", borderBottom: "1px solid #e0e0e0", backgroundColor: "#fafafa", maxHeight: "120px", overflowY: "auto" }}>
+          <div style={{ fontSize: "11px", color: "#999", marginBottom: "6px" }}>历史对话</div>
+          {convs.map(function(cv: any) {
+            return (
+              <div key={cv.id} onClick={function(){ onSwitchConv && onSwitchConv(cv.id); }} style={{ padding: "4px 8px", cursor: "pointer", borderRadius: "4px", fontSize: "12px", color: "#333", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} onMouseEnter={function(e: any){ (e.target as HTMLElement).style.backgroundColor = "#e3f2fd"; }} onMouseLeave={function(e: any){ (e.target as HTMLElement).style.backgroundColor = "transparent"; }}>
+                {cv.title || "新对话"}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Messages */}
       <div style={{ flex: 1, overflowY: "auto", padding: "20px" }}>
