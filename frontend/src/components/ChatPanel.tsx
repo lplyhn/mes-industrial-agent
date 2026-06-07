@@ -8,6 +8,7 @@ interface Props {
   onSend: (content: string) => void;
   onStop: () => void;
   onClear: () => void;
+  onSelectMessage?: (msgId: string) => void;
 }
 
 const QUICK_QUESTIONS = [
@@ -28,6 +29,7 @@ export const ChatPanel: React.FC<Props> = ({
   onSend,
   onStop,
   onClear,
+  onSelectMessage,
 }) => {
   const [input, setInput] = useState("");
   const [isListening, setIsListening] = useState(false);
@@ -108,7 +110,7 @@ export const ChatPanel: React.FC<Props> = ({
           </div>
         )}
         {messages.map((msg) => (
-          <MessageBubble key={msg.id} message={msg} />
+          <MessageBubble key={msg.id} message={msg} onSelect={onSelectMessage} />
         ))}
         <div ref={bottomRef} />
       </div>

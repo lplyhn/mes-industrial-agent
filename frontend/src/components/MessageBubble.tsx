@@ -3,6 +3,7 @@ import type { ChatMessage } from "../types";
 
 interface Props {
   message: ChatMessage;
+  onSelect?: (id: string) => void;
 }
 
 function formatTimestamp(ts: number): string {
@@ -12,7 +13,7 @@ function formatTimestamp(ts: number): string {
     .padStart(2, "0")}:${d.getSeconds().toString().padStart(2, "0")}`;
 }
 
-export const MessageBubble: React.FC<Props> = ({ message }) => {
+export const MessageBubble: React.FC<Props> = ({ message, onSelect }) => {
   const isUser = message.role === "user";
 
   return (
@@ -44,6 +45,7 @@ export const MessageBubble: React.FC<Props> = ({ message }) => {
       </div>
       <div style={{ maxWidth: "75%" }}>
         <div
+          onClick={() => !isUser && onSelect?.(message.id)}
           style={{
             backgroundColor: isUser ? "#e3f2fd" : "#ffffff",
             border: "1px solid",
@@ -55,7 +57,11 @@ export const MessageBubble: React.FC<Props> = ({ message }) => {
             color: "#333",
             whiteSpace: "pre-wrap",
             wordBreak: "break-word",
+            cursor: isUser ? "default" : "pointer",
+            transition: "box-shadow 0.15s",
           }}
+          onMouseEnter={(e) => { if (!isUser) { (e.target as HTMLElement).style.boxShadow = "0 0 0 2px #1976d2"; } }}
+          onMouseLeave={(e) => { (e.target as HTMLElement).style.boxShadow = "none"; }}
         >
           {message.content ||
             (message.role === "assistant" ? "思考中..." : "")}

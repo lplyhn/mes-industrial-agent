@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { ChatMessage, ToolCall } from '../types';
 import { streamChat } from '../services/hermes';
 
@@ -10,6 +10,7 @@ export function useSSE() {
   const aborterRef = useRef<AbortController | null>(null);
   const assistantIdRef = useRef<string>('');
   const contentRef = useRef('');
+  const turnIdRef = useRef<string>('');
 
   const sendMessage = useCallback(async (content: string) => {
     const userMsg: ChatMessage = {
@@ -26,6 +27,7 @@ export function useSSE() {
 
     const assistantId = `assistant-${Date.now()}`;
     assistantIdRef.current = assistantId;
+    turnIdRef.current = assistantId;
     contentRef.current = '';
 
     const abortController = new AbortController();
@@ -63,7 +65,7 @@ export function useSSE() {
                 updated[idx] = { ...updated[idx], status: tool.status as "running" | "completed" | "failed" };
                 return updated;
               }
-              return [...prev, { ...tool, status: tool.status as "running" | "completed" | "failed" }];
+              return [...prev, { ...tool, status: tool.status as "running" | "completed" | "failed", turnId: turnIdRef.current }];
             });
           },
           onDone: (fullContent) => {

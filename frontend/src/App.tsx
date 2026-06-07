@@ -15,6 +15,7 @@ const App: React.FC = () => {
     clearChat,
   } = useSSE();
 
+  const [selectedTurnId, setSelectedTurnId] = React.useState<string | null>(null);
   const [leftWidth, setLeftWidth] = React.useState(25);
   const [dragging, setDragging] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
@@ -74,6 +75,7 @@ const App: React.FC = () => {
           onSend={sendMessage}
           onStop={stopStreaming}
           onClear={clearChat}
+          onSelectMessage={setSelectedTurnId}
         />
       </div>
 
@@ -113,7 +115,7 @@ const App: React.FC = () => {
           overflow: "hidden",
         }}
       >
-        <TracePanel toolCalls={toolCalls} />
+        <TracePanel toolCalls={toolCalls} selectedTurnId={selectedTurnId} />
       </div>
 
       {/* Error Toast */}

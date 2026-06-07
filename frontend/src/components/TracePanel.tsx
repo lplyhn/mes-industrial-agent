@@ -4,6 +4,7 @@ import { ResultRenderer } from "./ResultRenderer";
 
 interface Props {
   toolCalls: ToolCall[];
+  selectedTurnId?: string | null;
 }
 
 const S_ICONS: Record<string, string> = { running: "⏳", completed: "✅", failed: "❌" };
@@ -47,7 +48,7 @@ function getPreview(result: string | undefined): string | null {
   return result.length > 80 ? result.slice(0, 80) + "..." : result;
 }
 
-export const TracePanel: React.FC<Props> = ({ toolCalls }) => {
+export const TracePanel: React.FC<Props> = ({ toolCalls, selectedTurnId }) => {
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
   const previews = useMemo(
     () => toolCalls.map((c) => ({ preview: getPreview(c.result), data: tryParseData(c.result) })),
@@ -57,8 +58,18 @@ export const TracePanel: React.FC<Props> = ({ toolCalls }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Auto-scroll to bottom on new tool calls
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [toolCalls]);
+
+  // Scroll to matching tool call when selectedTurnId changes
+  useEffect(() => {
+    if (!selectedTurnId || !scrollRef.current) return;
+    const el = scrollRef.current.querySelector(`[data-turn-id="${selectedTurnId}"]`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [selectedTurnId]);
 
   return (
     <div
@@ -93,11 +104,14 @@ export const TracePanel: React.FC<Props> = ({ toolCalls }) => {
           return (
             <div
               key={`${call.tool_name}-${idx}`}
+              data-turn-id={call.turnId || ""}
               style={{
-                border: "1px solid #e8e8e8",
+                border: call.turnId && call.turnId === selectedTurnId ? "2px solid #1976d2" : "1px solid #e8e8e8",
                 borderRadius: "8px",
                 marginBottom: "8px",
                 overflow: "hidden",
+                boxShadow: call.turnId && call.turnId === selectedTurnId ? "0 0 8px rgba(25,118,210,0.3)" : "none",
+                transition: "all 0.3s",
               }}
             >
               {/* Header */}

@@ -13,6 +13,7 @@ export interface ToolCall {
   params?: Record<string, unknown>;
   error?: string;
   duration?: number;
+  turnId?: string;
 }
 
 export interface SSEEvent {
