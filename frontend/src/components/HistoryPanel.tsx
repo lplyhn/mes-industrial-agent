@@ -17,10 +17,10 @@ export const HistoryPanel: React.FC<Props> = ({
   onDeleteConv,
   onRenameConv,
 }) => {
-  var [editingId, setEditingId] = React.useState(null);
+  var [editingId, setEditingId] = React.useState<string | null>(null);
   var [editValue, setEditValue] = React.useState("");
 
-  function startEdit(id, title) {
+  function startEdit(id: string, title: string) {
     setEditingId(id);
     setEditValue(title || "");
   }

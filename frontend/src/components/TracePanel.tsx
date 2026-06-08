@@ -1,6 +1,7 @@
 ﻿import React, { useState, useMemo, useRef, useEffect } from "react";
 import type { ToolCall } from "../types";
 import { ResultRenderer } from "./ResultRenderer";
+import ReactMarkdown from "react-markdown";
 
 interface Props {
   toolCalls: ToolCall[];
@@ -58,7 +59,7 @@ function getPreview(result: string | undefined): string | null {
 }
 
 export const TracePanel: React.FC<Props> = ({ toolCalls, selectedTurnId }) => {
-  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+  const [expandedIndex, setExpandedIndex] = useState<number | string | null>(null);
   const previews = useMemo(
     () => toolCalls.map((c) => ({ preview: getPreview(c.result), data: tryParseData(c.result) })),
     [toolCalls]
@@ -196,6 +197,30 @@ export const TracePanel: React.FC<Props> = ({ toolCalls, selectedTurnId }) => {
                 </div>
               )}
 
+              {/* AI loading indicator */}
+              {call.aiLoading && (
+                <div style={{
+                  padding: "12px 14px",
+                  borderTop: "1px solid #e0e0e0",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  fontSize: "12px",
+                  color: "#888",
+                  backgroundColor: "#fafafa",
+                }}>
+                  <div className="ai-loading-spinner" style={{
+                    width: "14px",
+                    height: "14px",
+                    border: "2px solid #e0e0e0",
+                    borderTopColor: "#1976d2",
+                    borderRadius: "50%",
+                    animation: "aiSpin 0.8s linear infinite",
+                  }} />
+                  <span>AI 分析中...</span>
+                </div>
+              )}
+
               {/* AI Analysis - after data visualization */}
               {call.aiAnalysis && (function() {
                 var tone = getAnalysisTone(call.aiAnalysis);
@@ -258,12 +283,33 @@ export const TracePanel: React.FC<Props> = ({ toolCalls, selectedTurnId }) => {
                         fontSize: "12px",
                         color: textColor,
                         lineHeight: 1.7,
-                        whiteSpace: "pre-wrap",
-                        wordBreak: "break-word",
                       }}
                     >
-                      {call.aiAnalysis}
+                      <ReactMarkdown>{call.aiAnalysis}</ReactMarkdown>
                     </div>
+                  </div>
+                );
+              })()}
+
+              {/* LLM Prompt (collapsible) */}
+              {call.analysisPrompt && (() => {
+                var pk = "prompt_" + String(idx);
+                var pe = expandedIndex === pk;
+                return (
+                  <div style={{borderTop: "1px solid #e0e0e0", backgroundColor: "#fafafa"}}>
+                    <div
+                      onClick={() => setExpandedIndex(pe ? null : (pk as any))}
+                      style={{padding: "6px 12px", display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "11px", color: "#888"}}
+                    >
+                      <span style={{fontSize: "10px", opacity: 0.6}}>{pe ? "▼" : "▶"}</span>
+                      <span style={{fontWeight: 500}}>LLM 提示词</span>
+                      <span style={{fontSize: "10px", color: "#bbb", marginLeft: "auto"}}>点击展开查看</span>
+                    </div>
+                    {pe && (
+                      <pre style={{margin: 0, padding: "8px 12px 10px", fontSize: "10px", color: "#555", lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word", maxHeight: "300px", overflowY: "auto", backgroundColor: "#f5f5f5", fontFamily: "'SF Mono', 'Fira Code', 'Consolas', monospace"}}>
+                        {call.analysisPrompt}
+                      </pre>
+                    )}
                   </div>
                 );
               })()}

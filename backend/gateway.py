@@ -1,4 +1,4 @@
-import json, asyncio, httpx, uuid
+﻿import json, asyncio, httpx, uuid
 
 from fastapi import FastAPI
 
@@ -23,6 +23,41 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, 
 ANALYSIS_API_KEY = "sk-83d9f6fa7b8442ddbb484da6460179ba"
 ANALYSIS_BASE_URL = "https://api.deepseek.com"
 ANALYSIS_MODEL = "deepseek-v4-flash"
+
+import os as _os
+_SKILLS_DIR = _os.path.join(_os.path.dirname(__file__), "..", "skills")
+_TOOL_SKILL_MAP = {
+    "mcp_mes_workorders": "mes_workorder.md",
+    "mcp_mes_query_workorders": "mes_workorder.md",
+    "mcp_mes_production": "mes_production.md",
+    "mcp_mes_query_production": "mes_production.md",
+    "mcp_mes_quality": "mes_quality.md",
+    "mcp_mes_analyze_quality": "mes_quality.md",
+    "mcp_mes_equipment": "mes_equipment.md",
+    "mcp_mes_diagnose_equipment": "mes_equipment.md",
+    "mcp_mes_generate_daily_report": "mes_daily_report.md",
+    "mcp_mes_daily_report": "mes_daily_report.md",
+}
+
+def load_skill_content(tool_name):
+    fname = _TOOL_SKILL_MAP.get(tool_name)
+    if not fname:
+        return ""
+    spath = _os.path.join(_SKILLS_DIR, fname)
+    if not _os.path.exists(spath):
+        return ""
+    try:
+        with open(spath, "r", encoding="utf-8-sig") as f:
+            content = f.read()
+        # Strip YAML frontmatter (handle BOM and no-BOM)
+        stripped = content.lstrip("﻿")
+        if stripped.startswith("---"):
+            parts = stripped.split("---", 2)
+            if len(parts) >= 3:
+                stripped = parts[2].strip()
+        return stripped[:2500]
+    except:
+        return ""
 
 API_BASE = "http://localhost:8000"
 
@@ -479,23 +514,27 @@ async def analyze(req: dict):
     else:
         parsed = data
     data_str = json.dumps(parsed, indent=2, ensure_ascii=False)[:3000]
-    system_prompt = "你是一个MES工业数据分析专家。分析下方工具返回的JSON数据，输出简洁的洞察分析（3-5句话）：\n1. 关键数据解读（核心指标）\n2. 异常/警告信号（如果有）\n3. 改进建议\n用中文输出，不要使用Markdown格式，每句话一行。"
+    skill_content = load_skill_content(tool_name)
+    skill_part = ("\u53c2\u8003\u4ee5\u4e0b\u6280\u80fd\u6587\u6863\u4e86\u89e3\u6570\u636e\u7ed3\u6784\u548c\u5206\u6790\u8981\u70b9\uff1a\n" + skill_content) if skill_content else ""
+    base_prompt = "\u4f60\u662f\u4e00\u4e2aMES\u5de5\u4e1a\u6570\u636e\u5206\u6790\u4e13\u5bb6\u3002\u5206\u6790\u4e0b\u65b9\u5de5\u5177\u8fd4\u56de\u7684JSON\u6570\u636e\uff0c\u8f93\u51fa\u7b80\u6d01\u7684\u6d1e\u5bdf\u5206\u6790\uff083-5\u53e5\u8bdd\uff09\uff1a\n1. \u5173\u952e\u6570\u636e\u89e3\u8bfb\uff08\u6838\u5fc3\u6307\u6807\uff09\n2. \u5f02\u5e38/\u8b66\u544a\u4fe1\u53f7\uff08\u5982\u679c\u6709\uff09\n3. \u6539\u8fdb\u5efa\u8bae\n\u7528\u4e2d\u6587\u8f93\u51fa\uff0c\u4f7f\u7528Markdown\u683c\u5f0f\u3002"
+    system_prompt = base_prompt + ("\n\n" + skill_part if skill_part else "")
+    user_content = f"\u5de5\u5177: {tool_name}\n\u6570\u636e:\n{data_str}"
+    full_prompt = f"[System]\n{system_prompt}\n\n[User]\n{user_content}"
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             r = await client.post(
                 ANALYSIS_BASE_URL + "/chat/completions",
-                json={"model": ANALYSIS_MODEL, "messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": f"工具: {tool_name}\n数据:\n{data_str}"}], "temperature": 0.3, "max_tokens": 512},
+                json={"model": ANALYSIS_MODEL, "messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_content}], "temperature": 0.3, "max_tokens": 2048},
                 headers={"Authorization": f"Bearer {ANALYSIS_API_KEY}", "Content-Type": "application/json"},
             )
             if r.status_code == 200:
                 j = r.json()
                 analysis = j.get("choices", [{}])[0].get("message", {}).get("content", "")
-                return {"analysis": analysis}
+                return {"analysis": analysis, "prompt": full_prompt}
             else:
-                return {"analysis": "[analysis request failed]"}
+                return {"analysis": "[analysis request failed]", "prompt": full_prompt}
     except Exception as e:
-        return {"analysis": "[analysis service error]"}
-
+        return {"analysis": "[analysis service error]", "prompt": full_prompt}
 
 @app.get("/health")
 

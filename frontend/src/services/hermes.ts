@@ -147,17 +147,17 @@ function parseSSEData(
   }
 }
 
-export async function analyzeToolData(data: any, toolName: string): Promise<string> {
+export async function analyzeToolData(data: any, toolName: string): Promise<{analysis: string; prompt: string}> {
   try {
     const r = await fetch('/api/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ data: JSON.stringify(data), tool_name: toolName }),
     });
-    if (!r.ok) return '';
+    if (!r.ok) return {analysis: "", prompt: ""};
     const j = await r.json();
-    return j?.analysis || '';
-  } catch { return ''; }
+    return {analysis: j?.analysis || "", prompt: j?.prompt || ""};
+  } catch { return {analysis: "", prompt: ""}; }
 }
 
 export async function listConversations(): Promise<{id: string; title: string; created_at: string; updated_at: string}[]> {

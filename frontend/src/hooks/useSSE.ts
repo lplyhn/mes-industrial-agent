@@ -159,13 +159,16 @@ const sendMessage = useCallback(async (content: string) => {
                   try {
                     const parsed = JSON.parse(tool.result);
                     if (parsed && typeof parsed === "object" && Object.keys(parsed).length > 0) {
-                      analyzeToolData(parsed, tool.tool_name).then(function(analysis) {
-                        if (analysis) {
+                      // Set aiLoading directly on updated[idx] (not nested setToolCalls)
+                      updated[idx] = { ...updated[idx], aiLoading: true };
+                      const capturedTurnId1 = turnIdRef.current;
+                      analyzeToolData(parsed, tool.tool_name).then(function(result) {
+                        if (result.analysis) {
                           setToolCalls(function(prev2) {
-                            var idx2 = prev2.findIndex(function(t) { return t.tool_name === tool.tool_name && t.status === "completed"; });
+                            var idx2 = prev2.findIndex(function(t) { return t.tool_name === tool.tool_name && t.turnId === capturedTurnId1; });
                             if (idx2 >= 0) {
                               var u2 = [...prev2];
-                              u2[idx2] = { ...u2[idx2], aiAnalysis: analysis };
+                              u2[idx2] = { ...u2[idx2], aiAnalysis: result.analysis, analysisPrompt: result.prompt, aiLoading: false };
                               saveDataRef.current = { messages: saveDataRef.current.messages || [], toolCalls: u2 };
                               return u2;
                             }
@@ -183,13 +186,16 @@ return updated;
                 try {
                   var parsedNew = JSON.parse(tool.result);
                   if (parsedNew && typeof parsedNew === "object" && Object.keys(parsedNew).length > 0) {
-                    analyzeToolData(parsedNew, tool.tool_name).then(function(analysis) {
-                      if (analysis) {
+                    // Set aiLoading on new tool entry directly
+                    newTC[newTC.length - 1] = { ...newTC[newTC.length - 1], aiLoading: true };
+                    const capturedTurnId2 = turnIdRef.current;
+                    analyzeToolData(parsedNew, tool.tool_name).then(function(result) {
+                      if (result.analysis) {
                         setToolCalls(function(prev2) {
-                          var idx2 = prev2.findIndex(function(t) { return t.tool_name === tool.tool_name && t.status === "completed"; });
+                          var idx2 = prev2.findIndex(function(t) { return t.tool_name === tool.tool_name && t.turnId === capturedTurnId2; });
                           if (idx2 >= 0) {
                             var u2 = [...prev2];
-                            u2[idx2] = { ...u2[idx2], aiAnalysis: analysis };
+                            u2[idx2] = { ...u2[idx2], aiAnalysis: result.analysis, analysisPrompt: result.prompt, aiLoading: false };
                             saveDataRef.current = { messages: saveDataRef.current.messages || [], toolCalls: u2 };
                             return u2;
                           }

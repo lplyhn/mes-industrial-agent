@@ -15,6 +15,8 @@ export interface ToolCall {
   duration?: number;
   turnId?: string;
   aiAnalysis?: string;
+  analysisPrompt?: string;
+  aiLoading?: boolean;
 }
 
 export interface SSEEvent {
