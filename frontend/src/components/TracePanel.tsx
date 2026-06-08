@@ -20,6 +20,15 @@ function tryParseData(result: string | undefined): any {
   }
 }
 
+function getAnalysisTone(text: string): "normal" | "warning" | "error" {
+  var t = text.toLowerCase();
+  var errorWords = ["严重", "故障", "紧急", "失败", "危险", "异常", "critical", "必须立即"];
+  var warningWords = ["警告", "注意", "延迟", "延期", "下降", "偏高", "偏低", "风险", "建议", "损失"];
+  for (var w of errorWords) { if (t.indexOf(w) >= 0) return "error"; }
+  for (var w of warningWords) { if (t.indexOf(w) >= 0) return "warning"; }
+  return "normal";
+}
+
 function getPreview(result: string | undefined): string | null {
   if (!result || result === "OK") return null;
   try {
@@ -159,23 +168,6 @@ export const TracePanel: React.FC<Props> = ({ toolCalls, selectedTurnId }) => {
                 </span>
               </div>
 
-              {/* AI Analysis */}
-              {call.aiAnalysis && (
-                <div
-                  style={{
-                    padding: "8px 12px",
-                    borderTop: "1px solid #e8f5e9",
-                    backgroundColor: "#f1f8e9",
-                    fontSize: "12px",
-                    color: "#333",
-                    lineHeight: 1.6,
-                  }}
-                >
-                  <div style={{fontWeight:600,color:"#2e7d32",marginBottom:4,fontSize:11}}>AI 分析</div>
-                  <div style={{whiteSpace:"pre-wrap",wordBreak:"break-word"}}>{call.aiAnalysis}</div>
-                </div>
-              )}
-
               {/* Rich visualization */}
               {p.data && (
                 <div
@@ -203,6 +195,78 @@ export const TracePanel: React.FC<Props> = ({ toolCalls, selectedTurnId }) => {
                   {p.preview}
                 </div>
               )}
+
+              {/* AI Analysis - after data visualization */}
+              {call.aiAnalysis && (function() {
+                var tone = getAnalysisTone(call.aiAnalysis);
+                var isWarn = tone === "warning";
+                var isErr = tone === "error";
+                var bg = isErr ? "linear-gradient(135deg, #fbe9e7 0%, #ffccbc 100%)" : isWarn ? "linear-gradient(135deg, #fff8e1 0%, #ffe082 100%)" : "linear-gradient(135deg, #f1f8e9 0%, #e8f5e9 100%)";
+                var borderColor = isErr ? "#ef9a9a" : isWarn ? "#ffcc02" : "#c8e6c9";
+                var badgeBg = isErr ? "#c62828" : isWarn ? "#e65100" : "#2e7d32";
+                var titleColor = isErr ? "#c62828" : isWarn ? "#e65100" : "#2e7d32";
+                var textColor = isErr ? "#b71c1c" : isWarn ? "#bf360c" : "#1b5e20";
+                var badgeLabel = isErr ? "警" : isWarn ? "!" : "AI";
+                var titleLabel = isErr ? "异常警报" : isWarn ? "风险提示" : "数据分析报告";
+
+                return (
+                  <div
+                    className="ai-analysis-block"
+                    style={{
+                      padding: "10px 14px",
+                      borderTop: "1px solid " + borderColor,
+                      background: bg,
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "5px",
+                        marginBottom: "6px",
+                      }}
+                    >
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          width: "18px",
+                          height: "18px",
+                          borderRadius: "50%",
+                          backgroundColor: badgeBg,
+                          color: "#fff",
+                          fontSize: "10px",
+                          fontWeight: 700,
+                        }}
+                      >
+                        {badgeLabel}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: "11px",
+                          fontWeight: 600,
+                          color: titleColor,
+                          letterSpacing: "0.3px",
+                        }}
+                      >
+                        {titleLabel}
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "12px",
+                        color: textColor,
+                        lineHeight: 1.7,
+                        whiteSpace: "pre-wrap",
+                        wordBreak: "break-word",
+                      }}
+                    >
+                      {call.aiAnalysis}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Expanded raw detail */}
               {expandedIndex === idx && (

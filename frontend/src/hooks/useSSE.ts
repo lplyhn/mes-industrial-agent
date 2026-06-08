@@ -179,6 +179,27 @@ const sendMessage = useCallback(async (content: string) => {
 return updated;
               }
               var newTC = [...prev, { ...tool, status: tool.status as "running" | "completed" | "failed", turnId: turnIdRef.current }];
+              if (tool.status === "completed" && tool.result && tool.result !== "OK") {
+                try {
+                  var parsedNew = JSON.parse(tool.result);
+                  if (parsedNew && typeof parsedNew === "object" && Object.keys(parsedNew).length > 0) {
+                    analyzeToolData(parsedNew, tool.tool_name).then(function(analysis) {
+                      if (analysis) {
+                        setToolCalls(function(prev2) {
+                          var idx2 = prev2.findIndex(function(t) { return t.tool_name === tool.tool_name && t.status === "completed"; });
+                          if (idx2 >= 0) {
+                            var u2 = [...prev2];
+                            u2[idx2] = { ...u2[idx2], aiAnalysis: analysis };
+                            saveDataRef.current = { messages: saveDataRef.current.messages || [], toolCalls: u2 };
+                            return u2;
+                          }
+                          return prev2;
+                        });
+                      }
+                    });
+                  }
+                } catch(e) {}
+              }
               saveDataRef.current = { messages: saveDataRef.current.messages || [], toolCalls: newTC };
               return newTC;
             });

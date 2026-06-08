@@ -169,4 +169,4 @@ export const ChatPanel: React.FC<Props> = ({
       </div>
     </div>
   );
-};
+};
