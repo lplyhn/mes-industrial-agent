@@ -18,6 +18,12 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, 
 
 
 
+
+# AI analysis config
+ANALYSIS_API_KEY = "sk-83d9f6fa7b8442ddbb484da6460179ba"
+ANALYSIS_BASE_URL = "https://api.deepseek.com"
+ANALYSIS_MODEL = "deepseek-v4-flash"
+
 API_BASE = "http://localhost:8000"
 
 
@@ -460,6 +466,35 @@ async def chat(req: ChatReq):
 
     return StreamingResponse(stream_resp(text, intents, results), media_type="text/event-stream", headers={"Cache-Control":"no-cache","Connection":"keep-alive"})
 
+
+
+@app.post("/analyze")
+async def analyze(req: dict):
+    import json, httpx
+    data = req.get("data", "{}")
+    tool_name = req.get("tool_name", "unknown")
+    if isinstance(data, str):
+        try: parsed = json.loads(data)
+        except: parsed = data
+    else:
+        parsed = data
+    data_str = json.dumps(parsed, indent=2, ensure_ascii=False)[:3000]
+    system_prompt = "你是一个MES工业数据分析专家。分析下方工具返回的JSON数据，输出简洁的洞察分析（3-5句话）：\n1. 关键数据解读（核心指标）\n2. 异常/警告信号（如果有）\n3. 改进建议\n用中文输出，不要使用Markdown格式，每句话一行。"
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            r = await client.post(
+                ANALYSIS_BASE_URL + "/chat/completions",
+                json={"model": ANALYSIS_MODEL, "messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": f"工具: {tool_name}\n数据:\n{data_str}"}], "temperature": 0.3, "max_tokens": 512},
+                headers={"Authorization": f"Bearer {ANALYSIS_API_KEY}", "Content-Type": "application/json"},
+            )
+            if r.status_code == 200:
+                j = r.json()
+                analysis = j.get("choices", [{}])[0].get("message", {}).get("content", "")
+                return {"analysis": analysis}
+            else:
+                return {"analysis": "[analysis request failed]"}
+    except Exception as e:
+        return {"analysis": "[analysis service error]"}
 
 
 @app.get("/health")

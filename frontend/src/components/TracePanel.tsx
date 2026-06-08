@@ -159,6 +159,23 @@ export const TracePanel: React.FC<Props> = ({ toolCalls, selectedTurnId }) => {
                 </span>
               </div>
 
+              {/* AI Analysis */}
+              {call.aiAnalysis && (
+                <div
+                  style={{
+                    padding: "8px 12px",
+                    borderTop: "1px solid #e8f5e9",
+                    backgroundColor: "#f1f8e9",
+                    fontSize: "12px",
+                    color: "#333",
+                    lineHeight: 1.6,
+                  }}
+                >
+                  <div style={{fontWeight:600,color:"#2e7d32",marginBottom:4,fontSize:11}}>AI 分析</div>
+                  <div style={{whiteSpace:"pre-wrap",wordBreak:"break-word"}}>{call.aiAnalysis}</div>
+                </div>
+              )}
+
               {/* Rich visualization */}
               {p.data && (
                 <div

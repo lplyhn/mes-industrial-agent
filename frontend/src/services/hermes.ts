@@ -147,6 +147,19 @@ function parseSSEData(
   }
 }
 
+export async function analyzeToolData(data: any, toolName: string): Promise<string> {
+  try {
+    const r = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: JSON.stringify(data), tool_name: toolName }),
+    });
+    if (!r.ok) return '';
+    const j = await r.json();
+    return j?.analysis || '';
+  } catch { return ''; }
+}
+
 export async function listConversations(): Promise<{id: string; title: string; created_at: string; updated_at: string}[]> {
   const r = await fetch('/api/conversations');
   if (!r.ok) throw new Error('Failed to list conversations');
