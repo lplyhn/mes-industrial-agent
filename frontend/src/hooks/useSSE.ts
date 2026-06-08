@@ -153,33 +153,33 @@ const sendMessage = useCallback(async (content: string) => {
               const idx = prev.findIndex(t => t.tool_name === tool.tool_name && t.status === 'running');
               if (idx >= 0) {
                 const updated = [...prev];
-                updated[idx] = { ...updated[idx], status: tool.status as "running" | "completed" | "failed" };
-                return updated;
+                updated[idx] = { ...updated[idx], status: tool.status as "running" | "completed" | "failed", result: tool.result || updated[idx].result, label: tool.label || updated[idx].label };
+                                // Trigger AI analysis when tool completes
+                if (tool.status === "completed" && tool.result && tool.result !== "OK") {
+                  try {
+                    const parsed = JSON.parse(tool.result);
+                    if (parsed && typeof parsed === "object" && Object.keys(parsed).length > 0) {
+                      analyzeToolData(parsed, tool.tool_name).then(function(analysis) {
+                        if (analysis) {
+                          setToolCalls(function(prev2) {
+                            var idx2 = prev2.findIndex(function(t) { return t.tool_name === tool.tool_name && t.status === "completed"; });
+                            if (idx2 >= 0) {
+                              var u2 = [...prev2];
+                              u2[idx2] = { ...u2[idx2], aiAnalysis: analysis };
+                              saveDataRef.current = { messages: saveDataRef.current.messages || [], toolCalls: u2 };
+                              return u2;
+                            }
+                            return prev2;
+                          });
+                        }
+                      });
+                    }
+                  } catch(e) {}
+                }
+return updated;
               }
               var newTC = [...prev, { ...tool, status: tool.status as "running" | "completed" | "failed", turnId: turnIdRef.current }];
               saveDataRef.current = { messages: saveDataRef.current.messages || [], toolCalls: newTC };
-              // Trigger AI analysis when tool completes
-              if (tool.status === 'completed' && tool.result && tool.result !== 'OK') {
-                try {
-                  const parsed = JSON.parse(tool.result);
-                  if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
-                    analyzeToolData(parsed, tool.tool_name).then(function(analysis) {
-                      if (analysis) {
-                        setToolCalls(function(prev2) {
-                          var idx2 = prev2.findIndex(function(t) { return t.tool_name === tool.tool_name && t.status === 'completed'; });
-                          if (idx2 >= 0) {
-                            var u2 = [...prev2];
-                            u2[idx2] = { ...u2[idx2], aiAnalysis: analysis };
-                            saveDataRef.current = { messages: saveDataRef.current.messages || [], toolCalls: u2 };
-                            return u2;
-                          }
-                          return prev2;
-                        });
-                      }
-                    });
-                  }
-                } catch(e) {}
-              }
               return newTC;
             });
           },
