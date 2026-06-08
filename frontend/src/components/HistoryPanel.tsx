@@ -6,6 +6,7 @@ interface Props {
   onNewChat: () => void;
   onSwitchConv: (id: string) => void;
   onDeleteConv: (id: string) => void;
+  onRenameConv?: (id: string, title: string) => void;
 }
 
 export const HistoryPanel: React.FC<Props> = ({
@@ -14,7 +15,25 @@ export const HistoryPanel: React.FC<Props> = ({
   onNewChat,
   onSwitchConv,
   onDeleteConv,
+  onRenameConv,
 }) => {
+  var [editingId, setEditingId] = React.useState(null);
+  var [editValue, setEditValue] = React.useState("");
+
+  function startEdit(id, title) {
+    setEditingId(id);
+    setEditValue(title || "");
+  }
+
+  function commitEdit() {
+    var id = editingId;
+    var val = editValue;
+    setEditingId(null);
+    if (id && val.trim() && onRenameConv) {
+      onRenameConv(id, val.trim());
+    }
+  }
+
   return (
     <div style={{
       height: "100%",
@@ -78,16 +97,53 @@ export const HistoryPanel: React.FC<Props> = ({
               onMouseEnter={function(e) { if (!isActive) { (e.currentTarget as HTMLElement).style.backgroundColor = "#f0f0f0"; } }}
               onMouseLeave={function(e) { if (!isActive) { (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"; } }}
             >
-              <span style={{
-                fontSize: "13px",
-                color: isActive ? "#1976d2" : "#555",
-                fontWeight: isActive ? 500 : 400,
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                flex: 1,
-              }}>
-                {cv.title || "新对话"}
+              {editingId === cv.id ? (
+                <input
+                  autoFocus
+                  value={editValue}
+                  onChange={function(e) { setEditValue(e.target.value); }}
+                  onBlur={commitEdit}
+                  onKeyDown={function(e) { if (e.key === 'Enter') commitEdit(); if (e.key === 'Escape') setEditingId(null); }}
+                  onClick={function(e) { e.stopPropagation(); }}
+                  style={{
+                    flex: 1,
+                    fontSize: "13px",
+                    padding: "2px 4px",
+                    border: "1px solid #1976d2",
+                    borderRadius: "3px",
+                    outline: "none",
+                    backgroundColor: "#fff",
+                  }}
+                />
+              ) : (
+                <span style={{
+                  fontSize: "13px",
+                  color: isActive ? "#1976d2" : "#555",
+                  fontWeight: isActive ? 500 : 400,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  flex: 1,
+                  cursor: "text",
+                }}
+                  onDoubleClick={function(e) { e.stopPropagation(); startEdit(cv.id, cv.title); }}
+                >
+                  {cv.title || "新对话"}
+                </span>
+              )}
+              <span
+                onClick={function(e) { e.stopPropagation(); startEdit(cv.id, cv.title); }}
+                style={{
+                  fontSize: "11px",
+                  color: "#999",
+                  cursor: "pointer",
+                  padding: "2px 4px",
+                  visibility: isActive ? "visible" : "hidden",
+                  marginRight: "2px",
+                }}
+                title="重命名"
+              >
+                ✏
               </span>
               <span
                 onClick={function(e) { e.stopPropagation(); onDeleteConv(cv.id); }}

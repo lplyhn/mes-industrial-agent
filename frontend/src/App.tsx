@@ -19,6 +19,7 @@ const App: React.FC = () => {
     switchConversation,
     createNewConv,
     deleteConv,
+    renameConv,
   } = useSSE();
 
   const [selectedTurnId, setSelectedTurnId] = React.useState<string | null>(null);
@@ -105,6 +106,7 @@ const App: React.FC = () => {
           onNewChat={createNewConv}
           onSwitchConv={function(id) { setCurrentConvId(id); switchConversation(id); }}
           onDeleteConv={deleteConv}
+          onRenameConv={renameConv}
         />
       </div>
 

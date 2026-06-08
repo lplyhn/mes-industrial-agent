@@ -59,6 +59,13 @@ export function useSSE() {
     } catch (e) { console.error(e); }
   }, [loadConversations]);
 
+  const renameConv = useCallback(async (id: string, title: string) => {
+    try {
+      await updateConversation(id, { title });
+      await loadConversations();
+    } catch (e) { console.error(e); }
+  }, [loadConversations]);
+
   const createNewConv = useCallback(async () => {
     try {
       // Save current conversation before switching
@@ -208,6 +215,7 @@ const sendMessage = useCallback(async (content: string) => {
     switchConversation,
     createNewConv,
     deleteConv,
+    renameConv,
   };
 }
 
